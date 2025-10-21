@@ -255,8 +255,8 @@ st.set_page_config(page_title="Painel Análises Spaece", layout="wide")
 st.title("📈 Painel Análises Spaece")
 st.write("###  Análise das escola de acordo com o Valor de Desempenho (VL_D)")
 
-with st.sidebar:
-    st.header("Filtros")
+# with st.sidebar:
+#     # st.header("Filtros")
 
 #--------------------------------------------------------------------------------------------------------------------
 col1, col2 = st.columns(2)

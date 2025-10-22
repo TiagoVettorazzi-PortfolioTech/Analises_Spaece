@@ -118,6 +118,7 @@ def grafico_barras_vertical_2(
         paper_bgcolor="#F0F2F6",
         title_font_size=16,
         title_x=0.02,
+        showlegend=False,  # <<< remove a legenda completamente
         xaxis=dict(
             showticklabels=False,
             showgrid=False,
@@ -125,16 +126,7 @@ def grafico_barras_vertical_2(
             range=[0, x_max] if x_max else None
         ),
         yaxis=dict(title="", automargin=True),
-        legend=dict(
-            title=hue_col,
-            font=dict(size=10),
-            orientation="h",
-            yanchor="top",
-            y=0.98,       
-            xanchor="center",
-            x=0.5
-        ),
-        margin=dict(l=120, r=30, t=120, b=20), 
+        margin=dict(l=120, r=30, t=120, b=20),
         height=500
     )
 
@@ -243,6 +235,14 @@ top10_fortaleza_grafico = grafico_barras_vertical_2 (
     hue_col = "DC_REDE",
     palette = paleta_cores
 )
+# top10_fortaleza_grafico = grafico_barras_vertical(
+#     df = top_10_escolas_9ano_fortaleza,
+#     x_col = "VL_D", 
+#     y_col = "NM_ESCOLA",
+#     titulo = "Top 10 Escolas de Fortaleza - 9º Ano (VL_D)",
+#     bar_color = "steelblue"            
+# )
+
 
 fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 axes = axes.flatten()

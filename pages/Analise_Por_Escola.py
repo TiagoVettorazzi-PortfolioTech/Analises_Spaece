@@ -37,6 +37,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+st.title("📈 Painel Análises Spaece por Descritor")
 
 # 🏫 Filtro de escola (com seleção padrão automática)
 st.sidebar.header("🏫 Filtro de Escola")
@@ -147,22 +148,21 @@ with col2:
         color="Cor",
         color_discrete_map={"≤ 50%": "red", "> 50%": "steelblue"},
         text=media_descritores_top10["Desempenho"].map(lambda v: f"{v:.1f}%"),
-        title="Desempenho Médio por Descritor - Top 10 Escolas (9º Ano)<br><sup>Barras vermelhas indicam ≤ 50%</sup>"
+        title="Desempenho Médio por Descritor - Top 10 Escolas (9º Ano)<br><sup>"
     )
 
     fig2.update_traces(textposition="outside", cliponaxis=False)
     fig2.update_layout(
-        plot_bgcolor="#F0F2F6",
-        paper_bgcolor="#F0F2F6",
-        title_font_size=18,
-        title_x=0.02,
-        yaxis=dict(title="Descritor", tickangle=0),
-        xaxis=dict(title="Desempenho (%)", range=[0, media_descritores_top10["Desempenho"].max() + 10]),
-        # legend_title_text="",
-        margin=dict(l=40, r=20, t=100, b=80),
-        height=1000
-    )
-
+    showlegend=False,
+    plot_bgcolor="#F0F2F6",
+    paper_bgcolor="#F0F2F6",
+    title_font_size=18,
+    title_x=0.02,
+    yaxis=dict(title="Descritor", tickangle=0),
+    xaxis=dict(title="Desempenho (%)", range=[0, media_descritores_top10["Desempenho"].max() + 10]),
+    margin=dict(l=40, r=20, t=100, b=80),
+    height=1000
+)
     st.plotly_chart(fig2, use_container_width=True)
 
 

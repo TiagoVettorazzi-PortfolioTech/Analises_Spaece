@@ -42,7 +42,7 @@ st.title("📈 Painel Análises Spaece por Descritor")
 # 🏫 Filtro de escola (com seleção padrão automática)
 st.sidebar.header("🏫 Filtro de Escola")
 
-lista_escolas = sorted(df["NM_ESCOLA"].dropna().unique())
+lista_escolas = sorted(df_9ano["NM_ESCOLA"].dropna().unique())
 
 # Define a escola padrão (por exemplo, a primeira da lista)
 escola_padrao = lista_escolas[0]

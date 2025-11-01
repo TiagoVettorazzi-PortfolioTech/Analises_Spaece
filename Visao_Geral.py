@@ -152,7 +152,7 @@ top_10_geral_grafico = grafico_barras_vertical (
     df = top_10_geral,
     x_col = "VL_D",
     y_col = "NM_ESCOLA",
-    titulo = "Top 10 Escolas Municipais - 9º Ano (VL_D)",
+    titulo = "Top 10 Escolas - 9º Ano (VL_D)",
     bar_color = "steelblue"
 )
 
@@ -175,7 +175,7 @@ top10_estadual_grafico = grafico_barras_vertical (
     df = top_10_escolas_9ano_estadual,
     x_col = "VL_D",
     y_col = "NM_ESCOLA",
-    titulo = "Top 10 Escolas Municipais - 9º Ano (VL_D)",
+    titulo = "Top 10 Escolas Estaduais - 9º Ano (VL_D)",
     bar_color = "steelblue"
 )
 
@@ -189,7 +189,7 @@ top_10_escolas_9ano_municipal = (
     df_9ano_municipal[["NM_MUNICIPIO", "NM_ESCOLA", "VL_D"]]
     .dropna()
     .sort_values(by="VL_D", ascending=False)
-    .head(10)
+    .head(30)
     .reset_index(drop=True)
 )
 

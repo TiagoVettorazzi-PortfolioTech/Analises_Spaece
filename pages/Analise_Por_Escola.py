@@ -47,15 +47,15 @@ lista_escolas = sorted(df_9ano["NM_ESCOLA"].dropna().unique())
 # Define a escola padrão (por exemplo, a primeira da lista)
 escola_padrao = lista_escolas[0]
 
-escola_escolhida = st.sidebar.selectbox(
+escola_selecionada = st.sidebar.selectbox(
     "Selecione a escola:",
     options=lista_escolas,
     index=0  # seleciona automaticamente a primeira da lista
 )
 
 # Aplica o filtro imediatamente
-df_filtrado = selecionar_escola(df_9ano, escola_escolhida)
-st.write(f"### Escola selecionada: **{escola_escolhida}**")
+df_filtrado = selecionar_escola(df_9ano, escola_selecionada)
+st.write(f"### Escola selecionada: **{escola_selecionada}**")
 
 #--------------------------------------------------------------------------------------------------------------------
 # Cálculos de comparação
@@ -93,7 +93,7 @@ with col1:
         color="Cor",
         color_discrete_map={"≤ 50%": "red", "> 50%": "steelblue"},
         text=desempenho_tfp["Desempenho"].map(lambda v: f"{v:.1f}%"),
-        title=f"Desempenho por Descritor - {escola_escolhida} (9º Ano)<br><sup>Barras vermelhas indicam ≤ 50%</sup>"
+        title=f"Desempenho por Descritor - {escola_selecionada} (9º Ano)<br><sup>Barras vermelhas indicam ≤ 50%</sup>"
     )
 
     fig.update_traces(textposition="outside", cliponaxis=False)
@@ -192,7 +192,7 @@ df_eixos_descritores = pd.DataFrame([
     for descritor in descritores
 ])
 
-# if escola_escolhida != "Todas as escolas" and not df_filtrado.empty:
+# if escola_selecionada != "Todas as escolas" and not df_filtrado.empty:
 colunas_descritores = [col for col in df_filtrado.columns if col.startswith("D")]
 
 # Valores da escola selecionada por descritor (média da escola, se houver mais de uma linha)
@@ -222,7 +222,7 @@ fig3 = px.bar(
     text=res["VL"].map(lambda v: f"{v:.1f}%"),
     color="EIXO",
     color_discrete_sequence=px.colors.qualitative.Set2,
-    title=f"Desempenho Médio por Eixo - {escola_escolhida} (9º Ano)"
+    title=f"Desempenho Médio por Eixo - {escola_selecionada} (9º Ano)"
 )
 
 fig3.update_traces(textposition="outside", cliponaxis=False)
@@ -251,3 +251,83 @@ grafico_eixos = st.plotly_chart(fig3, use_container_width=True)
 
 # with col1, col2:
 #     grafico_eixos
+
+
+
+
+#--------------------------------------------------------------------------------------------------------------------
+
+# Reconstruir o DataFrame comparativo_completo com todos os descritores (com sufixos)
+desempenho_tfp_completo = df_filtrado[colunas_descritores].T
+desempenho_tfp_completo.columns = ["TFP - (%)"]
+desempenho_tfp_completo = desempenho_tfp_completo.apply(pd.to_numeric, errors='coerce')
+desempenho_tfp_completo.dropna(inplace=True)
+
+# Garantir a existência da média dos 10 melhores com sufixo
+# media_top10_completo = top10_geral_todos[colunas_descritores].mean().dropna().to_frame(name="Top 10 Geral - Média (%)")
+media_top10_completo = (
+    top10_geral_todos[colunas_descritores]
+    .apply(pd.to_numeric, errors='coerce')  # <— converte aqui
+    .mean()
+    .dropna()
+    .to_frame(name="Top 10 Geral - Média (%)")
+)
+
+# Recriar o comparativo
+comparativo_completo = desempenho_tfp_completo.join(media_top10_completo, how='inner')
+
+
+
+
+# Adicionar coluna de eixo ao comparativo completo
+comparativo_completo_com_eixo = comparativo_completo.copy()
+comparativo_completo_com_eixo["Eixo"] = comparativo_completo_com_eixo.index.map(
+    lambda d: next((eixo for eixo, descritores in eixos_classificados.items() if d in descritores), None)
+)
+
+# Filtrar apenas descritores com eixo identificado
+comparativo_completo_com_eixo = comparativo_completo_com_eixo.dropna(subset=["Eixo"])
+
+# Calcular média por eixo para TFP e Top 10 Geral
+medias_por_eixo = comparativo_completo_com_eixo.groupby("Eixo")[
+    ["TFP - (%)", "Top 10 Geral - Média (%)"]
+].mean().round(1)
+
+#tools.display_dataframe_to_user(name="Desempenho por Eixo - TFP x Top 10", dataframe=medias_por_eixo)
+
+
+
+
+# Criar roteiro de intervenção pedagógica por eixo com base nas médias e lacunas da TFP
+roteiro_intervencao = []
+
+for eixo, row in medias_por_eixo.iterrows():
+    tfp = row["TFP - (%)"]
+    top10 = row["Top 10 Geral - Média (%)"]
+    lacuna = top10 - tfp
+
+    if lacuna > 60:
+        prioridade = "🔴 Alta"
+    elif lacuna > 40:
+        prioridade = "🟠 Média"
+    else:
+        prioridade = "🟢 Baixa"
+
+    roteiro_intervencao.append({
+        "Eixo": eixo,
+        "Desempenho TFP (%)": tfp,
+        "Média Top 10 (%)": top10,
+        "Lacuna (%)": lacuna,
+        "Prioridade de Intervenção": prioridade,
+        "Sugestão": f"Revisar conteúdos de {eixo.lower()}, com foco nos descritores mais críticos. Propor atividades diagnósticas, planos de aula específicos e grupos de reforço."
+    })
+
+df_roteiro_intervencao = pd.DataFrame(roteiro_intervencao)
+
+df_roteiro_intervencao["Escola"] = escola_selecionada 
+
+#import ace_tools as tools; tools.display_dataframe_to_user(name="Roteiro de Intervenção Pedagógica por Eixo", dataframe=df_roteiro_intervencao)
+
+df_roteiro_intervencao = df_roteiro_intervencao[["Eixo", "Média Top 10 (%)", "Lacuna (%)", "Prioridade de Intervenção", "Sugestão"]].reset_index(drop=True)
+
+df_roteiro_intervencao

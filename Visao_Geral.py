@@ -16,11 +16,13 @@ df_9ano = df[df['DC_ETAPA'] == 'ENSINO FUNDAMENTAL DE 9 ANOS - 9º ANO'].reset_i
 
 # ---------------------- seletor de escola (mesma lógica da outra página) ----------------------
 st.set_page_config(page_title="Painel Análises Spaece", layout="wide")
-st.title("📈 Painel Análises Spaece")
-st.write("### Análise das escolas de acordo com o Valor de Desempenho (VL_D)")
+st.title("📈 Painel Análises Spaece por Valor de Desempenho (VL_D)")
 
 lista_escolas = sorted(df_9ano["NM_ESCOLA"].dropna().unique())
 escola_selecionada = st.sidebar.selectbox("🏫 Selecione a escola:", options=lista_escolas, index=0)
+
+st.write(f"### Escola Selecionada: {escola_selecionada}")
+# st.write("### Análise das escolas de acordo com o Valor de Desempenho (VL_D)")
 
 def nome_eq(a, b):
     return str(a).strip().casefold() == str(b).strip().casefold()
@@ -270,19 +272,44 @@ with c4:
 # GRÁFICOS
 col1, col2 = st.columns(2)
 with col1:
-    st.plotly_chart(top_10_geral_grafico, use_container_width=True)
+    st.plotly_chart(
+        top_10_geral_grafico,
+        use_container_width=True,
+        config={'displayModeBar': False}
+    )
 with col2:
-    st.plotly_chart(top10_estadual_grafico, use_container_width=True)
+    st.plotly_chart(
+        top10_estadual_grafico,
+        use_container_width=True,
+        config={'displayModeBar': False}
+    )
 with col1:
-    st.plotly_chart(top10_municipal_grafico, use_container_width=True)
+    st.plotly_chart(
+        top10_municipal_grafico,
+        use_container_width=True,
+        config={'displayModeBar': False}
+    )
 with col2:
-    st.plotly_chart(top10_fortaleza_grafico, use_container_width=True)
+    st.plotly_chart(
+        top10_fortaleza_grafico,
+        use_container_width=True,
+        config={'displayModeBar': False}
+    )
+
 
 st.write("### Tabela Completa das Escolas do 9º Ano")
-st.dataframe(
+
+df_exibicao_9ano = (
     df_9ano[['DC_REDE','NM_MUNICIPIO','NM_ESCOLA','VL_D']]
-    .dropna().sort_values(by='VL_D', ascending=False).reset_index(drop=True)
+    .dropna()
+    .sort_values(by='VL_D', ascending=False)
+    .reset_index(drop=True)
 )
+
+df_exibicao_9ano.index = df_exibicao_9ano.index + 1
+df_exibicao_9ano.index.name = 'RANKING'
+
+st.dataframe(df_exibicao_9ano)
 #---------------------------------------------------------------------------------------------------------
 
 

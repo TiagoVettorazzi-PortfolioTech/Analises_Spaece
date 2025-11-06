@@ -93,7 +93,7 @@ with col1:
         color="Cor",
         color_discrete_map={"≤ 50%": "red", "> 50%": "steelblue"},
         text=desempenho_tfp["Desempenho"].map(lambda v: f"{v:.1f}%"),
-        title=f"Desempenho por Descritor - {escola_selecionada} (9º Ano)<br><sup>Barras vermelhas indicam ≤ 50%</sup>"
+        title=f"Desempenho por Descritor - Escola Selecionada <br><sup>Barras vermelhas indicam ≤ 50%</sup>"
     )
 
     fig.update_traces(textposition="outside", cliponaxis=False)
@@ -109,7 +109,10 @@ with col1:
         height=1000
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig,
+                    use_container_width=True,
+                    config={'displayModeBar': False}
+                    )
 
 #--------------------------------------------------------------------------------------------------------------------
 # 🎯 Top 10 escolas (independente do filtro)
@@ -163,7 +166,11 @@ with col2:
     margin=dict(l=40, r=20, t=100, b=80),
     height=1000
 )
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(
+        fig2, 
+        use_container_width=True,
+        config={'displayModeBar': False}
+    )
 
 
 #--------------------------------------------------------------------------------------------------------------------
@@ -222,7 +229,7 @@ fig3 = px.bar(
     text=res["VL"].map(lambda v: f"{v:.1f}%"),
     color="EIXO",
     color_discrete_sequence=px.colors.qualitative.Set2,
-    title=f"Desempenho Médio por Eixo - {escola_selecionada} (9º Ano)"
+    title="Desempenho Médio por Eixo"
 )
 
 fig3.update_traces(textposition="outside", cliponaxis=False)
@@ -316,8 +323,8 @@ for eixo, row in medias_por_eixo.iterrows():
     roteiro_intervencao.append({
         "Eixo": eixo,
         "Desempenho TFP (%)": tfp,
-        "Média Top 10 (%)": top10,
-        "Lacuna (%)": lacuna,
+        "Média Top 10 (%)": top10.round(1),
+        "Lacuna (%)": lacuna.round(1),
         "Prioridade de Intervenção": prioridade,
         "Sugestão": f"Revisar conteúdos de {eixo.lower()}, com foco nos descritores mais críticos. Propor atividades diagnósticas, planos de aula específicos e grupos de reforço."
     })
@@ -328,6 +335,23 @@ df_roteiro_intervencao["Escola"] = escola_selecionada
 
 #import ace_tools as tools; tools.display_dataframe_to_user(name="Roteiro de Intervenção Pedagógica por Eixo", dataframe=df_roteiro_intervencao)
 
-df_roteiro_intervencao = df_roteiro_intervencao[["Eixo", "Média Top 10 (%)", "Lacuna (%)", "Prioridade de Intervenção", "Sugestão"]].reset_index(drop=True)
+# df_roteiro_intervencao = df_roteiro_intervencao[["Eixo", "Média Top 10 (%)", "Lacuna (%)", "Prioridade de Intervenção", "Sugestão"]].reset_index(drop=True)
 
-df_roteiro_intervencao
+# df_roteiro_intervencao
+
+# 2. Aplica o reordenamento e reset_index que você solicitou (garante que o índice comece em 0)
+df_roteiro_intervencao = df_roteiro_intervencao[[
+    "Eixo", 
+    "Média Top 10 (%)", 
+    "Lacuna (%)", 
+    "Prioridade de Intervenção", 
+    "Sugestão"
+]].reset_index(drop=True)
+
+df_exibicao = df_roteiro_intervencao.copy()
+df_exibicao.index = df_exibicao.index + 1
+df_exibicao.index.name = '' 
+df_exibicao[["Média Top 10 (%)", "Lacuna (%)"]] = df_exibicao[["Média Top 10 (%)", "Lacuna (%)"]].round(2)
+
+st.table(df_exibicao)
+

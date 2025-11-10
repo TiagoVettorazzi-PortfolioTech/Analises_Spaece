@@ -191,7 +191,7 @@ top_10_geral = (
 top_10_geral_plot = preparar_topN_com_escola(top_10_geral, df_9ano, escola_selecionada, n=30)
 top_10_geral_grafico = grafico_barras_vertical_2(
     df=top_10_geral_plot, x_col='VL_D', y_col='NM_ESCOLA',
-    titulo='Top 10 Escolas - 9º Ano (VL_D)',
+    titulo='Top 30 Escolas - 9º Ano (VL_D)',
     hue_col='__cor', palette=PALETA
 )
 
@@ -204,7 +204,7 @@ top_10_estadual = (
 top_10_estadual_plot = preparar_topN_com_escola(top_10_estadual, df_9ano, escola_selecionada, n=30)
 top10_estadual_grafico = grafico_barras_vertical_2(
     df=top_10_estadual_plot, x_col='VL_D', y_col='NM_ESCOLA',
-    titulo='Top 10 Escolas Estaduais - 9º Ano (VL_D)',
+    titulo='Top 30 Escolas Estaduais - 9º Ano (VL_D)',
     hue_col='__cor', palette=PALETA
 )
 
@@ -217,11 +217,11 @@ top_10_municipal = (
 top_10_municipal_plot = preparar_topN_com_escola(top_10_municipal, df_9ano, escola_selecionada, n=30)
 top10_municipal_grafico = grafico_barras_vertical_2(
     df=top_10_municipal_plot, x_col='VL_D', y_col='NM_ESCOLA',
-    titulo='Top 10 Escolas Municipais - 9º Ano (VL_D)',
+    titulo='Top 30 Escolas Municipais - 9º Ano (VL_D)',
     hue_col='__cor', palette=PALETA
 )
 
-# Top 10 Fortaleza
+# Top 30 Fortaleza
 df_9ano_fortaleza = df_9ano[df_9ano['NM_MUNICIPIO'].str.upper() == 'FORTALEZA']
 top_10_fortaleza = (
     df_9ano_fortaleza[['NM_MUNICIPIO','NM_ESCOLA','VL_D']].dropna()
@@ -230,7 +230,7 @@ top_10_fortaleza = (
 top_10_fortaleza_plot = preparar_topN_com_escola(top_10_fortaleza, df_9ano, escola_selecionada, n=30)
 top10_fortaleza_grafico = grafico_barras_vertical_2(
     df=top_10_fortaleza_plot, x_col='VL_D', y_col='NM_ESCOLA',
-    titulo='Top 10 Escolas de Fortaleza - 9º Ano (VL_D)',
+    titulo='Top 30 Escolas de Fortaleza - 9º Ano (VL_D)',
     hue_col='__cor', palette=PALETA
 )
 

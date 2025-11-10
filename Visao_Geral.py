@@ -1,6 +1,7 @@
 # Bibliotecas utilizadas
 import streamlit as st
 import pandas as pd
+pd.set_option('display.max_colwidth', None)
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -66,7 +67,8 @@ def grafico_barras_vertical(
 
 
 def grafico_barras_vertical_2(
-    df, x_col, y_col, titulo, fmt="{:.2f}", hue_col=None, palette=None, x_max=None, max_label_len=40
+    df, x_col, y_col, titulo, fmt="{:.2f}", hue_col=None, palette=None,
+    x_max=None, max_label_len=40
 ):
     import plotly.express as px
     df_plot = df.copy()
@@ -74,34 +76,62 @@ def grafico_barras_vertical_2(
     # 1) Ordena o DF que VAI pro gráfico (maior VL_D em cima)
     df_plot = df_plot.sort_values(by=x_col, ascending=False).reset_index(drop=True)
 
-    # 2) Trunca rótulos longos
+    # 2) Cria um rótulo abreviado, mas NÃO mexe na coluna original
     def truncar_label(label, max_len=max_label_len):
         s = str(label)
         return s if len(s) <= max_len else s[:max_len-3] + "..."
-    df_plot[y_col] = df_plot[y_col].apply(truncar_label)
+    df_plot["label_escola"] = df_plot[y_col].apply(truncar_label)
 
-    color_map, color_sequence = (palette if isinstance(palette, dict) else None), (list(palette) if isinstance(palette, (list, tuple)) else None)
+    # 3) Configuração de cores
+    color_map, color_sequence = (
+        palette if isinstance(palette, dict) else None
+    ), (
+        list(palette) if isinstance(palette, (list, tuple)) else None
+    )
+
+    # 4) Repara que o y continua sendo o NOME COMPLETO
     fig = px.bar(
-        df_plot, x=x_col, y=y_col, orientation="h",
+        df_plot,
+        x=x_col,
+        y=y_col,                 # <-- categoria real = nome completo
+        orientation="h",
         color=hue_col,
         color_discrete_map=color_map,
         color_discrete_sequence=color_sequence,
         text=df_plot[x_col].map(lambda v: fmt.format(v)),
-        title=titulo
+        title=titulo,
+        hover_data={y_col: True}  # mostra o nome completo no hover
     )
+
     fig.update_traces(textposition="outside", cliponaxis=False, textfont=dict(size=11))
     fig.update_layout(
-        plot_bgcolor="#F0F2F6", paper_bgcolor="#F0F2F6",
-        title_font_size=16, title_x=0.02, showlegend=False,
-        xaxis=dict(showticklabels=False, showgrid=False, title="", range=[0, x_max] if x_max else None),
+        plot_bgcolor="#F0F2F6",
+        paper_bgcolor="#F0F2F6",
+        title_font_size=16,
+        title_x=0.02,
+        showlegend=False,
+        xaxis=dict(
+            showticklabels=False,
+            showgrid=False,
+            title="",
+            range=[0, x_max] if x_max else None
+        ),
         yaxis=dict(title="", automargin=True),
-        margin=dict(l=200, r=100, t=70, b=20), height=700
+        margin=dict(l=260, r=100, t=70, b=20),  # pode ajustar o "l" se precisar
+        height=700,
     )
-    # 3) Trava a ordem do eixo Y exatamente como está no df_plot
-    fig.update_yaxes(categoryorder='array',
-                    categoryarray=df_plot[y_col].tolist(),
-                    autorange='reversed')
+
+    # 5) Ordem + rótulo abreviado no eixo Y
+    fig.update_yaxes(
+        categoryorder="array",
+        categoryarray=df_plot[y_col].tolist(),      # ordem baseada no nome completo
+        autorange="reversed",
+        ticktext=df_plot["label_escola"],           # o que aparece visualmente
+        tickvals=df_plot[y_col]                     # ainda referenciando o nome completo
+    )
+
     return fig
+
 
 # ---------------------- helper para injetar a escola selecionada e colorir ----------------------
 def preparar_topN_com_escola(

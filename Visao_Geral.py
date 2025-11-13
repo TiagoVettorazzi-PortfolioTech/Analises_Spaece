@@ -30,40 +30,76 @@ def nome_eq(a, b):
 
 # ---------------------- helpers de gráfico (mantive suas funções) ----------------------
 def grafico_barras_vertical(
-    df, x_col, y_col, titulo, bar_color, fmt="{:.2f}", x_max=None, max_label_len=40
+    df, x_col, y_col, titulo, fmt="{:.2f}", hue_col=None, palette=None,
+    x_max=None, max_label_len=40
 ):
     import plotly.express as px
     df_plot = df.copy()
 
-    # 1) Ordena o DF que VAI pro gráfico (maior VL_D em cima)
+    # 1) Ordena pelo valor (maior primeiro)
     df_plot = df_plot.sort_values(by=x_col, ascending=False).reset_index(drop=True)
 
-    # 2) Trunca rótulos longos
+    # 2) Cria rótulo abreviado SEM sobrescrever a categoria real
     def truncar_label(label, max_len=max_label_len):
         s = str(label)
         return s if len(s) <= max_len else s[:max_len-3] + "..."
-    df_plot[y_col] = df_plot[y_col].apply(truncar_label)
+    df_plot["label_escola"] = df_plot[y_col].apply(truncar_label)
 
+    # 3) Cores
+    color_map, color_sequence = (
+        palette if isinstance(palette, dict) else None
+    ), (
+        list(palette) if isinstance(palette, (list, tuple)) else None
+    )
+
+    # 4) Agora: X = categoria (nome completo), Y = valor
     fig = px.bar(
         df_plot,
-        x=x_col, y=y_col, orientation="h",
+        x=y_col,                 # categoria real = nome completo
+        y=x_col,                 # valor numérico
+        # orientation padrão = 'v' (vertical)
+        color=hue_col,
+        color_discrete_map=color_map,
+        color_discrete_sequence=color_sequence,
         text=df_plot[x_col].map(lambda v: fmt.format(v)),
-        title=titulo, color_discrete_sequence=[bar_color]
+        title=titulo,
+        hover_data={y_col: True}  # mostra o nome completo no hover
     )
+
     fig.update_traces(textposition="outside", cliponaxis=False, textfont=dict(size=11))
+
+    # 5) Layout para barras verticais
     fig.update_layout(
-        plot_bgcolor="#F0F2F6", paper_bgcolor="#F0F2F6",
-        title_font_size=16, title_x=0.02, showlegend=False,
-        xaxis=dict(showticklabels=False, showgrid=False, title="", range=[0, x_max] if x_max else None),
-        yaxis=dict(title="", automargin=True),
-        margin=dict(l=200, r=100, t=70, b=20), height=500
+        plot_bgcolor="#F0F2F6",
+        paper_bgcolor="#F0F2F6",
+        title_font_size=16,
+        title_x=0.02,
+        showlegend=False,
+        xaxis=dict(
+            title="",
+            showgrid=False,
+            tickangle=-35,          # ajuda a caber rótulos
+        ),
+        yaxis=dict(
+            title="",
+            showticklabels=False,
+            showgrid=False,
+            range=[0, x_max] if x_max else None  # usa x_max como limite superior do Y
+        ),
+        margin=dict(l=60, r=40, t=70, b=140),     # mais espaço embaixo pros rótulos
+        height=520,
     )
-    # 3) Trava a ordem do eixo Y exatamente como está no df_plot
-    fig.update_yaxes(
-        categoryorder='array',
-        categoryarray=df_plot[y_col].tolist(),
-        autorange='reversed')
+
+    # 6) Ordem e rótulos abreviados no eixo X (categoria)
+    fig.update_xaxes(
+        categoryorder="array",
+        categoryarray=df_plot[y_col].tolist(),    # mantém a ordem do DF
+        ticktext=df_plot["label_escola"],         # rótulo abreviado exibido
+        tickvals=df_plot[y_col],                  # categoria real (nome completo)
+    )
+
     return fig
+
 
 
 def grafico_barras_vertical_2(
@@ -237,10 +273,10 @@ top10_fortaleza_grafico = grafico_barras_vertical_2(
 # ---------------------- layout ----------------------
 
 # ====== MÉTRICAS GERAIS ======
-media_geral      = float(df_9ano["VL_D"].mean().round(1))
-media_municipal  = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "MUNICIPAL"]["VL_D"].mean().round(1))
-media_estadual   = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "ESTADUAL"]["VL_D"].mean().round(1))
-media_fortaleza  = float(df_9ano[df_9ano["NM_MUNICIPIO"].str.upper() == "FORTALEZA"]["VL_D"].mean().round(1))
+media_geral      = float(df_9ano["VL_D"].mean().round(2))
+media_municipal  = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "MUNICIPAL"]["VL_D"].mean().round(2))
+media_estadual   = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "ESTADUAL"]["VL_D"].mean().round(2))
+media_fortaleza  = float(df_9ano[df_9ano["NM_MUNICIPIO"].str.upper() == "FORTALEZA"]["VL_D"].mean().round(2))
 escolas_analisadas = int(df_9ano["NM_ESCOLA"].nunique())
 
 # ====== BASE PARA AS MÉTRICAS ======
@@ -251,7 +287,7 @@ if df_sel.empty:
     st.stop()
 
 # VL_D da escola (média se houver múltiplas linhas)
-vl_escola     = float(df_sel["VL_D"].mean().round(1))
+vl_escola     = float(df_sel["VL_D"].mean().round(2))
 rede_sel      = str(df_sel["DC_REDE"].iloc[0])
 municipio_sel = str(df_sel["NM_MUNICIPIO"].iloc[0]).title()
 
@@ -266,10 +302,10 @@ rk_geral = int(
 )
 
 # Médias globais solicitadas
-media_geral     = float(df_9ano["VL_D"].mean().round(1))
-media_estadual  = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "ESTADUAL"]["VL_D"].mean().round(1))
-media_municipal = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "MUNICIPAL"]["VL_D"].mean().round(1))
-media_fortaleza = float(df_9ano[df_9ano["NM_MUNICIPIO"].str.upper() == "FORTALEZA"]["VL_D"].mean().round(1))
+media_geral     = float(df_9ano["VL_D"].mean().round(2))
+media_estadual  = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "ESTADUAL"]["VL_D"].mean().round(2))
+media_municipal = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "MUNICIPAL"]["VL_D"].mean().round(2))
+media_fortaleza = float(df_9ano[df_9ano["NM_MUNICIPIO"].str.upper() == "FORTALEZA"]["VL_D"].mean().round(2))
 
 # Helper: delta mostra quanto a ESCOLA está acima/abaixo da média (positivo = escola melhor)
 def delta_vs_escola(media):
@@ -326,6 +362,48 @@ with col2:
         config={'displayModeBar': False}
     )
 
+# ====== Comparativo: Escola vs médias das Top 30 por recorte ======
+
+def media_top30(df_base: pd.DataFrame) -> float:
+    # pega as 30 maiores e calcula média
+    top30 = (
+        df_base[['NM_ESCOLA', 'VL_D']].dropna()
+        .sort_values('VL_D', ascending=False)
+        .head(30)
+    )
+    return float(top30['VL_D'].mean())
+
+vl_escola_sel    = vl_escola 
+media_top30_mun  = media_top30(df_9ano[df_9ano['DC_REDE'].str.upper() == 'MUNICIPAL'])
+media_top30_est  = media_top30(df_9ano[df_9ano['DC_REDE'].str.upper() == 'ESTADUAL'])
+media_top30_for  = media_top30(df_9ano[df_9ano['NM_MUNICIPIO'].str.upper() == 'FORTALEZA'])
+
+df_comp = pd.DataFrame({
+    'NM_ESCOLA': [
+        'Escola Selecionada',
+        'Municipal',
+        'Estadual',
+        'Fortaleza',
+    ],
+    'VL_D': [vl_escola_sel, media_top30_mun, media_top30_est, media_top30_for],
+    '__cor': ['Selecionada', 'Outras', 'Outras', 'Outras']
+})
+
+grafico_comp = grafico_barras_vertical(
+    df=df_comp,
+    x_col='VL_D',
+    y_col='NM_ESCOLA',
+    titulo='Comparativo de Escola Selecionada com Médias das Top 30',
+    hue_col='__cor',
+    palette=PALETA,
+    max_label_len=20  # rótulo abreviado no eixo, mantendo categoria única
+)
+
+st.plotly_chart(
+    grafico_comp,
+    use_container_width=True,
+    config={'displayModeBar': False}
+)
 
 st.write("### Tabela Completa das Escolas do 9º Ano")
 

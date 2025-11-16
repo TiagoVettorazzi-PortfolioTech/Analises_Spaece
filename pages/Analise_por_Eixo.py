@@ -99,14 +99,15 @@ base = df_eixos_descritores.merge(vals, on='DESCRITOR', how='inner')
 res = base.groupby('EIXO', as_index=False)['VL'].mean()
 res.sort_values(by='VL', ascending=False, inplace=True)
 res['VL'] = res['VL'].round(1)
+order_eixos = res['EIXO'].tolist()
 
 fig3 = px.bar(
     res,
     x="EIXO",
     y="VL",
-    text=res["VL"].map(lambda v: f"{v:.1f}%"),
+    text=res["VL"].map(lambda v: f"{v:.1f}"),
     color="EIXO",
-    color_discrete_sequence=px.colors.qualitative.Set2,
+    color_discrete_sequence=["#4C78A8", "#4C78A8", "#4C78A8", "#4C78A8"],
     title="Desempenho Médio por Eixo – Escola Selecionada"
 )
 
@@ -117,10 +118,15 @@ fig3.update_layout(
     title_font_size=18,
     title_x=0.02,
     xaxis=dict(title="Eixo", tickangle=0),
-    yaxis=dict(title="Desempenho (%)", range=[0, res["VL"].max() + 10]),
+    yaxis=dict(title="Desempenho", range=[0, res["VL"].max() + 10]),
     showlegend=False,
     margin=dict(l=40, r=20, t=100, b=80),
     height=500
+)
+
+fig3.update_xaxes(
+    categoryorder="array",
+    categoryarray=order_eixos
 )
 
 st.plotly_chart(fig3, use_container_width=True)
@@ -182,13 +188,14 @@ res_eixos = (
 )
 
 res_eixos[["TFP", "Municipal", "Estadual"]] = res_eixos[["TFP", "Municipal", "Estadual"]].round(1)
+res_eixos['EIXO'] = pd.Categorical(res_eixos['EIXO'], categories=order_eixos, ordered=True)
 
 res_melt = res_eixos.melt(
     id_vars="EIXO",
     value_vars=["TFP", "Municipal", "Estadual"],
     var_name="Grupo",
     value_name="VL_D"
-)
+).sort_values("EIXO")
 
 res_melt["VL_D"] = res_melt["VL_D"].round(1)
 res_melt["Grupo"] = res_melt["Grupo"].replace({
@@ -209,9 +216,9 @@ fig_comp_eixos = px.bar(
     y="VL_D",
     color="Grupo",
     barmode="group",
-    text=res_melt["VL_D"].map(lambda v: f"{v:.1f}%"),
+    text=res_melt["VL_D"].map(lambda v: f"{v:.1f}"),
     color_discrete_map=color_map_grupos,
-    title="TFP × Municipal × Estadual — Desempenho Médio por Eixo"
+    title="Escola Selecionada× Municipal × Estadual — Desempenho Médio por Eixo"
 )
 
 fig_comp_eixos.update_traces(textposition="outside", cliponaxis=False)
@@ -222,9 +229,14 @@ fig_comp_eixos.update_layout(
     title_font_size=18,
     title_x=0.02,
     xaxis=dict(title="Eixo", tickangle=0),
-    yaxis=dict(title="Desempenho (%)", range=[0, 100]),
+    yaxis=dict(title="Desempenho", range=[0, 100]),
     legend_title_text="",
     margin=dict(l=40, r=20, t=100, b=80),
+)
+
+fig_comp_eixos.update_xaxes(
+    categoryorder="array",
+    categoryarray=order_eixos
 )
 
 st.plotly_chart(
@@ -232,7 +244,6 @@ st.plotly_chart(
     use_container_width=True,
     config={'displayModeBar': False}
 )
-
 
 #--------------------------------------------------------------------------------------------------------------------
 # 📋 Tabela: Roteiro de intervenção por eixo
@@ -265,7 +276,7 @@ comparativo_completo_com_eixo["Eixo"] = comparativo_completo_com_eixo.index.map(
 
 comparativo_completo_com_eixo = comparativo_completo_com_eixo.dropna(subset=["Eixo"])
 
-# Médias por eixo (TFP x Top 10 Geral)
+# Médias por eixo (Escola Selecionada x Top 10 Geral)
 medias_por_eixo = comparativo_completo_com_eixo.groupby("Eixo")[
     ["TFP - (%)", "Top 10 Geral - Média (%)"]
 ].mean().round(1)
@@ -307,8 +318,6 @@ df_roteiro_intervencao = df_roteiro_intervencao[[
 df_exibicao = df_roteiro_intervencao.copy()
 df_exibicao.index = df_exibicao.index + 1
 df_exibicao.index.name = ''
-# df_exibicao[["Média Top 10 (%)", "Lacuna (%)"]] = df_exibicao[["Média Top 10 (%)", "Lacuna (%)"]].round(2)
-# df_exibicao["Lacuna (%)"] = df_exibicao["Lacuna (%)"].round(2)
 
 st.subheader("📝 Roteiro de Intervenção Pedagógica por Eixo")
 st.table(df_exibicao)

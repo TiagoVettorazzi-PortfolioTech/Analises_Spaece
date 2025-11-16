@@ -78,7 +78,7 @@ def grafico_barras_vertical(
         xaxis=dict(
             title="",
             showgrid=False,
-            tickangle=-35,          # ajuda a caber rótulos
+            tickangle=0,          # ajuda a caber rótulos
         ),
         yaxis=dict(
             title="",
@@ -405,6 +405,49 @@ st.plotly_chart(
     config={'displayModeBar': False}
 )
 
+
+# Cálculo dos desvios em relação às médias Top 30
+desvio_mun = vl_escola_sel - media_top30_mun
+desvio_est = vl_escola_sel - media_top30_est
+desvio_for = vl_escola_sel - media_top30_for
+
+def formatar_desvio(desvio: float) -> str:
+    """Retorna um span HTML com cor, fundo e ícone conforme o sinal do desvio."""
+    if desvio >= 0:
+        cor_texto = "#166534"      # verde escuro
+        cor_fundo = "#dcfce7"      # verde bem claro
+        icone = "⬆️"
+        sinal = "+"
+    else:
+        cor_texto = "#991b1b"      # vermelho escuro
+        cor_fundo = "#fee2e2"      # vermelho bem claro
+        icone = "⬇️"
+        sinal = ""  # o sinal negativo já vem no número
+
+    return (
+        f"<span style='background-color:{cor_fundo}; color:{cor_texto}; "
+        f"padding:2px 6px; border-radius:4px; font-weight:bold; "
+        f"font-size:0.95rem;'>"
+        f"{icone} {sinal}{desvio:.1f}%"
+        f"</span>"
+    )
+
+desvio_mun_html = formatar_desvio(desvio_mun)
+desvio_est_html = formatar_desvio(desvio_est)
+desvio_for_html = formatar_desvio(desvio_for)
+
+texto_comp = (
+    f"Em comparativo às top 30 escolas da rede estadual, municipal e da cidade de Fortaleza, "
+    f"a escola selecionada possui um desvio de {desvio_mun_html} em relação às escolas municipais, "
+    f"{desvio_est_html} em relação às escolas estaduais e "
+    f"{desvio_for_html} em relação às escolas da cidade de Fortaleza."
+)
+
+st.markdown(texto_comp, unsafe_allow_html=True)
+
+
+
+# Tabela completa das escolas do 9º ano ---------------------------------------------------------------------------------
 st.write("### Tabela Completa das Escolas do 9º Ano")
 
 df_exibicao_9ano = (

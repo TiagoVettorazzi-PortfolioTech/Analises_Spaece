@@ -109,6 +109,11 @@ with col1:
         height=1000
     )
 
+    fig.update_yaxes(
+        categoryorder="array",
+        categoryarray=desempenho_tfp["Descritor"].tolist()
+    )
+
     st.plotly_chart(fig,
                     use_container_width=True,
                     config={'displayModeBar': False}
@@ -165,7 +170,13 @@ with col2:
     xaxis=dict(title="Desempenho (%)", range=[0, media_descritores_top10["Desempenho"].max() + 10]),
     margin=dict(l=40, r=20, t=100, b=80),
     height=1000
-)
+    )
+    
+    fig2.update_yaxes(
+        categoryorder="array",
+        categoryarray=media_descritores_top10["Descritor"].tolist()
+    )
+
     st.plotly_chart(
         fig2, 
         use_container_width=True,

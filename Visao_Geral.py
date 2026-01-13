@@ -1,13 +1,13 @@
 # Bibliotecas utilizadas
 import streamlit as st
 import pandas as pd
-pd.set_option('display.max_colwidth', None)
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
+pd.set_option('display.max_colwidth', None)
 
-# --- leitura e base (igual ao seu) ---
+# Leitura e preparação dos dados-----------------------------------------------
 xls = pd.ExcelFile('Planilhao_TCT_SPAECE_EF_2023_MT_240402-2 (1).xlsx')
 df = pd.DataFrame(xls.parse('ESCOLA'))
 df.columns = df.iloc[0]; df = df[1:]
@@ -15,7 +15,7 @@ df = df.drop(['CD_REDE','CD_ETAPA', 'CD_REGIONAL','CD_MUNICIPIO', 'CD_ESCOLA'], 
 df = df.dropna(axis=1, how='all')
 df_9ano = df[df['DC_ETAPA'] == 'ENSINO FUNDAMENTAL DE 9 ANOS - 9º ANO'].reset_index(drop=True)
 
-# ---------------------- seletor de escola (mesma lógica da outra página) ----------------------
+# seleção de escola -----------------------------------------------
 st.set_page_config(page_title="Painel Análises Spaece", layout="wide")
 st.title("📈 Painel Análises Spaece por Valor de Desempenho (VL_D)")
 
@@ -28,7 +28,7 @@ st.write(f"### Escola Selecionada: {escola_selecionada}")
 def nome_eq(a, b):
     return str(a).strip().casefold() == str(b).strip().casefold()
 
-# ---------------------- helpers de gráfico (mantive suas funções) ----------------------
+# Funções para criação de gráficos -----------------------------------------------
 def grafico_barras_vertical(
     df, x_col, y_col, titulo, fmt="{:.2f}", hue_col=None, palette=None,
     x_max=None, max_label_len=40
@@ -36,7 +36,7 @@ def grafico_barras_vertical(
     import plotly.express as px
     df_plot = df.copy()
 
-    # 1) Ordena pelo valor (maior primeiro)
+    # 1) Ordena pelo valor decresente
     df_plot = df_plot.sort_values(by=x_col, ascending=False).reset_index(drop=True)
 
     # 2) Cria rótulo abreviado SEM sobrescrever a categoria real
@@ -78,7 +78,7 @@ def grafico_barras_vertical(
         xaxis=dict(
             title="",
             showgrid=False,
-            tickangle=0,          # ajuda a caber rótulos
+            tickangle=0,        
         ),
         yaxis=dict(
             title="",
@@ -125,7 +125,7 @@ def grafico_barras_vertical_2(
         list(palette) if isinstance(palette, (list, tuple)) else None
     )
 
-    # 4) Repara que o y continua sendo o NOME COMPLETO
+    # 4) Gráfico de barras HORIZONTAIS: X = valor, Y = categoria (nome completo)
     fig = px.bar(
         df_plot,
         x=x_col,
@@ -160,16 +160,16 @@ def grafico_barras_vertical_2(
     # 5) Ordem + rótulo abreviado no eixo Y
     fig.update_yaxes(
         categoryorder="array",
-        categoryarray=df_plot[y_col].tolist(),      # ordem baseada no nome completo
+        categoryarray=df_plot[y_col].tolist(),      # ordem do DF
         autorange="reversed",
         ticktext=df_plot["label_escola"],           # o que aparece visualmente
-        tickvals=df_plot[y_col]                     # ainda referenciando o nome completo
+        tickvals=df_plot[y_col]                     # categoria real (nome completo)
     )
 
     return fig
 
 
-# ---------------------- helper para injetar a escola selecionada e colorir ----------------------
+# Funções para injetar a escola selecionada e colorir -----------------------------------------------
 def preparar_topN_com_escola(
     df_topN: pd.DataFrame,
     df_todos: pd.DataFrame,
@@ -178,7 +178,7 @@ def preparar_topN_com_escola(
 ) -> pd.DataFrame:
     """
     - df_topN: já é o Top N do recorte (colunas: NM_MUNICIPIO, NM_ESCOLA, VL_D).
-    - df_todos: base completa (df_9ano) de onde SEMPRE busco a escola selecionada.
+    - df_todos: base completa (df_9ano) de onde SEMPRE é procurada a escola selecionada.
     - escola_sel: texto do selectbox.
     - Retorna o DF + escola (se existir) ORDENADO por VL_D desc.
     """
@@ -205,7 +205,6 @@ def preparar_topN_com_escola(
         sel['__cor'] = 'Selecionada'
         out = pd.concat([out, sel], ignore_index=True)
 
-    # ORDENAR o DF a ser usado no GRÁFICO por VL_D desc (exatamente como você pediu)
     out = out.sort_values('VL_D', ascending=False).reset_index(drop=True)
 
     # opcional: limitar no máximo a N+1 linhas (TopN + Selecionada)
@@ -291,7 +290,7 @@ vl_escola     = float(df_sel["VL_D"].mean().round(2))
 rede_sel      = str(df_sel["DC_REDE"].iloc[0])
 municipio_sel = str(df_sel["NM_MUNICIPIO"].iloc[0]).title()
 
-# Ranking geral (1 = melhor)
+# Ranking geral
 df_rank_geral = df_9ano.sort_values("VL_D", ascending=False).reset_index(drop=True)
 df_rank_geral["Ranking"] = df_rank_geral.index + 1
 rk_geral = int(
@@ -301,17 +300,16 @@ rk_geral = int(
     ].min()
 )
 
-# Médias globais solicitadas
+# Médias globais para comparação
 media_geral     = float(df_9ano["VL_D"].mean().round(2))
 media_estadual  = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "ESTADUAL"]["VL_D"].mean().round(2))
 media_municipal = float(df_9ano[df_9ano["DC_REDE"].str.upper() == "MUNICIPAL"]["VL_D"].mean().round(2))
 media_fortaleza = float(df_9ano[df_9ano["NM_MUNICIPIO"].str.upper() == "FORTALEZA"]["VL_D"].mean().round(2))
 
-# Helper: delta mostra quanto a ESCOLA está acima/abaixo da média (positivo = escola melhor)
 def delta_vs_escola(media):
     return f"{(vl_escola - float(media)):+.1f}"
 
-# ====== LINHA 1: Escola, Rede, Município, Ranking (sem deltas) ======
+# LINHA 1: Escola, Rede, Município, Ranking
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     st.metric(label="Escola Selecionada (VL_D)", value=f"{vl_escola:.1f}")
@@ -322,7 +320,7 @@ with c3:
 with c4:
     st.metric(label="Ranking Geral", value=rk_geral)
 
-# ====== LINHA 2: Médias com delta vs escola selecionada ======
+# LINHA 2: Médias com delta vs escola selecionada
 c1, c2, c3, c4 = st.columns(4)
 with c1:
     st.metric(label="Média Geral (VL_D)", value=f"{media_geral:.1f}",    delta=delta_vs_escola(media_geral))
@@ -334,8 +332,7 @@ with c4:
     st.metric(label="Média Fortaleza (VL_D)", value=f"{media_fortaleza:.1f}", delta=delta_vs_escola(media_fortaleza))
 
 
-# ---------------------------------------------------------------------------------------------------------
-# GRÁFICOS
+# GRÁFICOS ---------------------------------------------------------------------------------
 col1, col2 = st.columns(2)
 with col1:
     st.plotly_chart(
@@ -362,7 +359,7 @@ with col2:
         config={'displayModeBar': False}
     )
 
-# ====== Comparativo: Escola vs médias das Top 30 por recorte ======
+# Comparativo: Escola vs médias das Top 30 por recorte -----------------------------------------------
 
 def media_top30(df_base: pd.DataFrame) -> float:
     # pega as 30 maiores e calcula média

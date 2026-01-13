@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 
-#--------------------------------------------------------------------------------------------------------------------
-# Leitura e filtros do arquivo Excel
+# Leitura e filtros do arquivo Excel -----------------------------------------------
 xls = pd.ExcelFile('Planilhao_TCT_SPAECE_EF_2023_MT_240402-2 (1).xlsx')
 
 df = pd.DataFrame(xls.parse('ESCOLA'))
@@ -30,8 +29,7 @@ def selecionar_escola(df, nome_escola):
     df_filtrado = df_9ano[filtro].copy()
     return df_filtrado
 
-#--------------------------------------------------------------------------------------------------------------------
-# Configuração de página
+# Configuração de página -----------------------------------------------
 st.set_page_config(
     page_title="Análise por Escola - Eixos e Intervenção",
     layout="wide",
@@ -54,8 +52,7 @@ escola_selecionada = st.sidebar.selectbox(
 df_filtrado = selecionar_escola(df_9ano, escola_selecionada)
 st.write(f"### Escola selecionada: **{escola_selecionada}**")
 
-#--------------------------------------------------------------------------------------------------------------------
-# 🎯 Definição dos eixos e mapeamento dos descritores
+# 🎯 Definição dos eixos e mapeamento dos descritores -----------------------------------------------
 eixos_classificados = {
     'Números e Operações': [
         'D01_5EF', 'D06_5EF', 'D07', 'D08', 'D10', 'D11', 'D12', 'D13',
@@ -82,8 +79,7 @@ df_eixos_descritores = pd.DataFrame([
 # Colunas de descritores (úteis em vários pontos)
 colunas_descritores = [col for col in df_filtrado.columns if col.startswith("D")]
 
-#--------------------------------------------------------------------------------------------------------------------
-# 📊 Gráfico 1: Desempenho médio por eixo (TFP da escola)
+# 📊 Gráfico 1: Desempenho médio por eixo (TFP da escola) -----------------------------------------------
 vals = (
     df_filtrado[colunas_descritores]
     .apply(pd.to_numeric, errors='coerce')
@@ -131,8 +127,7 @@ fig3.update_xaxes(
 
 st.plotly_chart(fig3, use_container_width=True)
 
-#--------------------------------------------------------------------------------------------------------------------
-# 📊 Gráfico 2: Comparativo por eixo — TFP x Municipal x Estadual
+# 📊 Gráfico 2: Comparativo por eixo — TFP x Municipal x Estadual -----------------------------------------------
 
 # 1) Colunas de descritores no df_9ano (garantia)
 descr_cols = [c for c in df_9ano.columns if c.startswith("D")]
